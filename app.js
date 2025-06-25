@@ -32,20 +32,16 @@ app.get('/campgrounds' , async (req , res) =>{
     res.render('campgrounds/index' , {campgrounds})
 })
 
-app.get('/camgrounds/new' , (req , res) => {
+app.get('/campgrounds/new' , (req , res) => {
     res.render('campgrounds/new');
 })
 
 app.post('/campgrounds' , async (req , res) => {
     const campground = new Campground(req.body.campground);
     await campground.save();
-    res.redirect(`/campgrounds/${campground._id}` , { campground });
+    res.redirect(`/campgrounds/${campground._id}`);
 })
 
-app.get('/campgrounds/:id/edit' , async (req , res) => {
-    const campground = await Campground.findById(req.params.id);
-    res.render('campgrounds/edit',{ campground});
-})
 
 app.get('/campgrounds/:id' , async (req , res) => {
     const campground = await Campground.findById(req.params.id);
@@ -68,6 +64,12 @@ app.delete('/campgrounds/:id', async (req, res) => {
     res.redirect('/campgrounds');
 })
 
+
+
+app.get('/campgrounds/:id/edit' , async (req , res) => {
+    const campground = await Campground.findById(req.params.id);
+    res.render('campgrounds/edit',{ campground});
+})
 
 app.listen( 5000 , () => {
     console.log("listening on 5000");
