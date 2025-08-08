@@ -9,6 +9,9 @@ const {campgroundSchema , reviewSchema} = require('./schemas');
 const ExpressError = require('./utils/ExpressError');
 const session = require('express-session');
 const flash = require('connect-flash');
+const passport = require('passport');
+const localStrategy = require('passport-local');
+const User = require('./models/users');
 
 mongoose.connect('mongodb://localhost:27017/yelp-camp');
 
@@ -29,6 +32,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 app.use(flash());
 
+
+
 const sessionconfig ={
     secret : "thisshouldbesecret",
     resave : false,
@@ -45,16 +50,24 @@ app.get('/', (req, res) => {
     res.render('home')
 });
 
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new localStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
 app.use( (req , res , next ) => { 
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error'); 
+    res.locals.currentUser = req.user;
     next();
 })
 
 app.use('/campgrounds', require('./routes/campgrounds'));
 
 app.use('/campgrounds/:id/reviews', require('./routes/review'));
+
+app.use('/' , require('./routes/users')); // const rotes = require('./routes/users');
 
 
 app.all(/(.*)/, (req, res) => {

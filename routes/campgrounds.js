@@ -4,7 +4,7 @@ const Campground = require('../models/campground');
 const Review = require('../models/review');
 const {campgroundSchema , reviewSchema} = require('../schemas');
 const ExpressError = require('../utils/ExpressError');
-
+const { isLoggedIn }  = require('../middleware');
 
 const validateCampground = (req, res , next) => {
     const { error } = campgroundSchema.validate(req.body);
@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
     res.render('campgrounds/index', { campgrounds })
 });
 
-router.get('/new', (req, res) => {
+router.get('/new', isLoggedIn ,(req, res) => {
     res.render('campgrounds/new');
 })
 
@@ -46,13 +46,21 @@ router.post('/', validateCampground ,async (req, res ) => {
     res.redirect(`/campgrounds/${campground._id}`)
 })
 
-router.get('/:id', async (req, res,) => {
+router.get('/:id', isLoggedIn , async (req, res,) => {
     const campground = await Campground.findById(req.params.id).populate('reviews');
+    if(!campground){
+        req.flash("error" , " Cant find the campground ");
+        return res.redirect('/campgrounds');
+    }
     res.render('campgrounds/show', { campground });
 });
 
 router.get('/:id/edit', async (req, res) => {
-    const campground = await Campground.findById(req.params.id)
+    const campground = await Campground.findById(req.params.id);
+    if(!campground){
+        req.flash("error" , " Cant find the campground ");
+        return res.redirect('/campgrounds');
+    }
     res.render('campgrounds/edit', { campground });
 })
 
@@ -66,24 +74,10 @@ router.put('/:id', validateCampground ,async (req, res) => {
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     await Campground.findByIdAndDelete(id);
+     req.flash("success" , " successfully deleted a campground ");
     res.redirect('/campgrounds');
 })
 
-router.post('/:id/reviews' , validateReview , async (req,res) =>{
-    const campground = await Campground.findById(req.params.id);
-    const review = new Review(req.body.review);
-    campground.reviews.push(review);
-    await review.save();
-    await campground.save();
-    res.redirect(`/campgrounds/${campground._id}`);
-})
-
-router.delete('/:id/reviews/:reviewId' , async (req , res) =>{
-    const {id , reviewId } = req.params;
-    await Campground.findByIdAndUpdate(id ,{$pull : {reviews: reviewId}});
-    await Review.findByIdAndDelete(reviewId);
-    res.redirect(`/campgrounds/${id}`)
-})
 
 
 module.exports = router;

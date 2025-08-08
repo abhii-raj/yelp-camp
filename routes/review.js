@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const ExpressError = require('../utils/ExpressError');
+const {campgroundSchema , reviewSchema} = require('../schemas');
+const Campground = require('../models/campground');
+const Review = require('../models/review');
 
 const validateReview = (req, res , next) =>{
     const {error} = reviewSchema.validate(req.body);
@@ -20,7 +23,7 @@ router.post('/' , validateReview , async (req,res) =>{
 
     await review.save();
     await campground.save();
-    req.flash("success" , " updated a campground ");
+    req.flash("success" , "  successfully posted a review");
     res.redirect(`/campgrounds/${campground._id}`);
 })
 
